@@ -181,18 +181,20 @@ export const Sidebar: React.FC = () => {
       {/* Mobile/Tablet Top Navigation Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-[#11100F] text-white flex items-center justify-between px-4 z-40 border-b border-stone-800 shadow-md">
         <NavLink to="/" className="flex items-center gap-2">
-          <span className="font-heading font-bold text-lg text-white">PANNAI</span>
-          <span className="font-tamil text-xs text-stone-400">பண்ணை</span>
+          <Logo variant="icon" size="sm" theme="dark" />
+          <span className="font-heading font-extrabold text-base text-white">PANNAI</span>
+          <span className="font-tamil text-xs text-pink-500 font-bold">பண்ணை</span>
         </NavLink>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 text-xs font-mono font-bold rounded-lg cursor-pointer transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-200 text-xs font-mono font-bold rounded-lg cursor-pointer transition-colors"
           aria-label="Toggle navigation"
         >
           {mobileOpen ? <X className="w-4 h-4 text-pink-400" /> : <Menu className="w-4 h-4 text-pink-400" />}
-          <span>{mobileOpen ? 'CLOSE' : 'MENU (வழிசெலுத்தல்)'}</span>
+          <span>{mobileOpen ? 'CLOSE' : 'MENU'}</span>
         </button>
       </div>
+
 
       {/* Desktop Fixed Left Sidebar */}
       <aside className="hidden lg:block fixed top-0 left-0 bottom-0 w-[240px] z-30 shadow-2xl">
