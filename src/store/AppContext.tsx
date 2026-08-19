@@ -17,7 +17,10 @@ import {
   INITIAL_PASSPORT,
   INITIAL_MARKET_LOTS,
   INITIAL_FARMER_INCOME,
+  INITIAL_MARKET_ORDERS,
+  INITIAL_BUYER_REQUESTS,
 } from '../data/demoData';
+
 
 interface Toast {
   id: string;
@@ -44,8 +47,14 @@ interface AppContextType {
   marketLots: MarketLot[];
   publishMarketLot: (batchId: string, pricePerKgINR: number) => MarketLot;
   
+  marketOrders: import('../types').MarketOrder[];
+  buyerRequests: import('../types').MarketBuyerRequest[];
+  createMarketOrder: (lotId: string, buyerCompany: string, quantityKg: number) => import('../types').MarketOrder;
+  updateOrderStatus: (orderId: string, status: import('../types').OrderStageStatus) => void;
+  
   reservations: BuyerReservation[];
   reserveMarketLot: (lotId: string, buyerName: string, buyerCompany: string, buyerType: BuyerReservation['buyerType'], quantityKg: number) => BuyerReservation;
+
   
   farmerIncome: FarmerIncomeRecord;
   confirmPaymentToFarmer: (amountINR: number) => void;
@@ -56,6 +65,15 @@ interface AppContextType {
   nextGuidedDemoStep: () => void;
   resetGuidedDemo: () => void;
   
+  viewMode: import('../types').PlatformViewMode;
+  setViewMode: (mode: import('../types').PlatformViewMode) => void;
+  
+  isVoiceModalOpen: boolean;
+  setIsVoiceModalOpen: (open: boolean) => void;
+  
+  isHelpModalOpen: boolean;
+  setIsHelpModalOpen: (open: boolean) => void;
+  
   language: 'ta' | 'en';
   setLanguage: (lang: 'ta' | 'en') => void;
   
@@ -63,6 +81,7 @@ interface AppContextType {
   addToast: (message: string, type?: Toast['type']) => void;
   removeToast: (id: string) => void;
 }
+
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -73,11 +92,85 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [batches, setBatches] = useState<Batch[]>([INITIAL_BATCH]);
   const [passports, setPassports] = useState<BatchPassport[]>([INITIAL_PASSPORT]);
   const [marketLots, setMarketLots] = useState<MarketLot[]>(INITIAL_MARKET_LOTS);
+  const [marketOrders, setMarketOrders] = useState<import('../types').MarketOrder[]>(INITIAL_MARKET_ORDERS);
+  const [buyerRequests] = useState<import('../types').MarketBuyerRequest[]>(INITIAL_BUYER_REQUESTS);
   const [reservations, setReservations] = useState<BuyerReservation[]>([]);
+
+  const createMarketOrder = (lotId: string, buyerCompany: string, quantityKg: number) => {
+    const targetLot = marketLots.find((l) => l.id === lotId) || marketLots[0];
+    const orderId = `PN-ORD-${Math.floor(10000 + Math.random() * 89999)}`;
+    const totalVal = quantityKg * targetLot.pricePerKgINR;
+    const platformFee = Math.round(totalVal * 0.03);
+    const logisticsFee = 1200;
+    const netPayout = totalVal - platformFee - logisticsFee;
+
+    const newOrder: import('../types').MarketOrder = {
+      id: orderId,
+      lotId,
+      batchId: targetLot.batchId,
+      productName: targetLot.title,
+      grade: targetLot.grade,
+      quantityKg,
+      pricePerKgINR: targetLot.pricePerKgINR,
+      totalValueINR: totalVal,
+      platformFeeINR: platformFee,
+      logisticsFeeINR: logisticsFee,
+      netPayoutINR: netPayout,
+      buyerName: 'Commercial Buyer',
+      buyerCompany,
+      buyerType: 'Aquaculture Hatchery',
+      buyerLocation: 'Thoothukudi, Tamil Nadu',
+      buyerDistanceKm: 18,
+      producerName: 'Muthu Swamy',
+      originPondId: 'TTK-042',
+      orderDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase(),
+      status: 'CONFIRMED',
+      stagesCompleted: {
+        orderPlaced: true,
+        buyerConfirmed: true,
+        batchVerified: true,
+        packed: true,
+        dispatched: false,
+        inTransit: false,
+        delivered: false,
+        payoutReleased: false,
+      },
+      isDemo: true,
+    };
+
+    setMarketOrders((prev) => [newOrder, ...prev]);
+    addToast(`Order ${orderId} placed successfully for ${buyerCompany}!`);
+    return newOrder;
+  };
+
+  const updateOrderStatus = (orderId: string, status: import('../types').OrderStageStatus) => {
+    setMarketOrders((prev) =>
+      prev.map((o) => {
+        if (o.id !== orderId) return o;
+        return {
+          ...o,
+          status,
+          stagesCompleted: {
+            ...o.stagesCompleted,
+            dispatched: status === 'IN_TRANSIT' || status === 'DELIVERED' || status === 'COMPLETED' ? true : o.stagesCompleted.dispatched,
+            inTransit: status === 'IN_TRANSIT' || status === 'DELIVERED' || status === 'COMPLETED' ? true : o.stagesCompleted.inTransit,
+            delivered: status === 'DELIVERED' || status === 'COMPLETED' ? true : o.stagesCompleted.delivered,
+            payoutReleased: status === 'COMPLETED' ? true : o.stagesCompleted.payoutReleased,
+          },
+        };
+      })
+    );
+    addToast(`Order ${orderId} updated to ${status}`);
+  };
+
   const [farmerIncome, setFarmerIncome] = useState<FarmerIncomeRecord>(INITIAL_FARMER_INCOME);
   const [guidedDemoStep, setGuidedDemoStep] = useState<GuidedDemoStep>(null);
+  const [viewMode, setViewMode] = useState<import('../types').PlatformViewMode>('FARMER');
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState<boolean>(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState<boolean>(false);
   const [language, setLanguage] = useState<'ta' | 'en'>('ta');
   const [toasts, setToasts] = useState<Toast[]>([]);
+
 
   const addToast = (message: string, type: Toast['type'] = 'success') => {
     const id = Date.now().toString();
@@ -309,7 +402,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const startGuidedDemo = () => {
     setGuidedDemoStep(1);
     setSelectedPondIdState('TTK-042');
-    addToast('Starting Guided Demo: 01 DETECT (Pond TTK-042)', 'info');
+    addToast('Starting Guided Demo: 01 DISCOVER (Pond TTK-042)', 'info');
   };
 
   const nextGuidedDemoStep = () => {
@@ -317,8 +410,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     else if (guidedDemoStep === 2) setGuidedDemoStep(3);
     else if (guidedDemoStep === 3) setGuidedDemoStep(4);
     else if (guidedDemoStep === 4) setGuidedDemoStep(5);
-    else if (guidedDemoStep === 5) setGuidedDemoStep(null);
+    else if (guidedDemoStep === 5) setGuidedDemoStep(6);
+    else if (guidedDemoStep === 6) setGuidedDemoStep(null);
   };
+
 
   const resetGuidedDemo = () => {
     setGuidedDemoStep(null);
@@ -342,8 +437,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         getPassportByBatchId,
         marketLots,
         publishMarketLot,
+        marketOrders,
+        buyerRequests,
+        createMarketOrder,
+        updateOrderStatus,
         reservations,
         reserveMarketLot,
+
         farmerIncome,
         confirmPaymentToFarmer,
         guidedDemoStep,
@@ -351,6 +451,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         startGuidedDemo,
         nextGuidedDemoStep,
         resetGuidedDemo,
+        viewMode,
+        setViewMode,
+        isVoiceModalOpen,
+        setIsVoiceModalOpen,
+        isHelpModalOpen,
+        setIsHelpModalOpen,
         language,
         setLanguage,
         toasts,
@@ -358,6 +464,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         removeToast,
       }}
     >
+
       {children}
     </AppContext.Provider>
   );

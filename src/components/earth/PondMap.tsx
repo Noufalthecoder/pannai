@@ -1,30 +1,28 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Polygon, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Polygon, Popup, Tooltip, useMap } from 'react-leaflet';
 import { useApp } from '../../store/AppContext';
 import type { Pond, PondStatus } from '../../types';
-import { DemoBadge, StatusBadge } from '../ui/Badge';
-import { Layers, Eye } from 'lucide-react';
+import { SourceBadge } from '../ui/SourceBadge';
+import { Eye, Layers } from 'lucide-react';
 
-const getPondColor = (status: PondStatus): string => {
+const getStatusColor = (status: PondStatus): string => {
   switch (status) {
-    case 'TOO DILUTE':
-      return '#8FBFB4';
-    case 'APPROACHING':
-      return '#3E8B7A';
-    case 'CANDIDATE':
-      return '#D9A441';
-    case 'FIELD CHECK':
-      return '#DE6A45';
     case 'SUITABLE':
-      return '#3E8B7A';
+      return '#059669'; // Muted Green
+    case 'CANDIDATE':
+      return '#D97706'; // Muted Amber
+    case 'FIELD CHECK':
+      return '#E11D48'; // Muted Coral
     case 'HARVEST WINDOW':
-      return '#C42A6B';
+      return '#D946EF'; // PANNAI Magenta Accent
+    case 'APPROACHING':
+      return '#2563EB'; // Blue
+    case 'TOO DILUTE':
     default:
-      return '#69615B';
+      return '#6B7280'; // Neutral Grey
   }
 };
 
-// Component to handle auto-zooming map to selected pond
 const MapController: React.FC<{ selectedPond: Pond | null }> = ({ selectedPond }) => {
   const map = useMap();
 
@@ -39,13 +37,43 @@ const MapController: React.FC<{ selectedPond: Pond | null }> = ({ selectedPond }
   return null;
 };
 
-export const PondMap: React.FC = () => {
+interface PondMapProps {
+  filterMode: 'MY_PONDS' | 'ALL_PONDS';
+  onFilterChange: (mode: 'MY_PONDS' | 'ALL_PONDS') => void;
+}
+
+export const PondMap: React.FC<PondMapProps> = ({ filterMode, onFilterChange }) => {
   const { ponds, selectedPond, setSelectedPondId } = useApp();
 
-  const center: [number, number] = [8.9124, 78.1685]; // Center of Tharuvaikulam / Thoothukudi Salt Pans
+  const center: [number, number] = [8.9124, 78.1685];
 
   return (
-    <div className="relative w-full h-[calc(100vh-8rem)] rounded-2xl overflow-hidden border border-[#E6DFD5] shadow-xs">
+    <div className="relative w-full h-[600px] lg:h-[calc(100vh-10rem)] rounded-2xl overflow-hidden border border-stone-300 shadow-md">
+      {/* Top Segmented Filter Overlay (Section 2 & 3 Requirement) */}
+      <div className="absolute top-4 left-4 z-[400] bg-white/95 backdrop-blur-md border border-stone-300 p-1.5 rounded-xl shadow-lg flex items-center gap-1 text-xs font-mono select-none">
+        <button
+          onClick={() => onFilterChange('MY_PONDS')}
+          className={`px-3.5 py-1.5 rounded-lg font-extrabold transition-all cursor-pointer ${
+            filterMode === 'MY_PONDS'
+              ? 'bg-[#11100F] text-white shadow-xs'
+              : 'text-stone-600 hover:bg-stone-100'
+          }`}
+        >
+          MY PONDS
+        </button>
+
+        <button
+          onClick={() => onFilterChange('ALL_PONDS')}
+          className={`px-3.5 py-1.5 rounded-lg font-extrabold transition-all cursor-pointer ${
+            filterMode === 'ALL_PONDS'
+              ? 'bg-[#11100F] text-white shadow-xs'
+              : 'text-stone-600 hover:bg-stone-100'
+          }`}
+        >
+          ALL PONDS
+        </button>
+      </div>
+
       <MapContainer
         center={center}
         zoom={13}
@@ -53,7 +81,7 @@ export const PondMap: React.FC = () => {
         className="w-full h-full"
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors & Sentinel-2 L2A'
+          attribution='&copy; OpenStreetMap contributors & Sentinel-2 L2A GIS'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
 
@@ -61,59 +89,85 @@ export const PondMap: React.FC = () => {
 
         {ponds.map((pond) => {
           const isSelected = selectedPond?.id === pond.id;
-          const color = getPondColor(pond.status);
+          const isMyPond = pond.isMyPond ?? (pond.id === 'TTK-042' || pond.id === 'TTK-001' || pond.id === 'TTK-007' || pond.id === 'TTK-015' || pond.id === 'TTK-023');
+          const color = getStatusColor(pond.status);
 
           const positions = pond.polygon.map((pt) => [pt.lat, pt.lng] as [number, number]);
+
+          // Visual Hierarchy Styling (Section 3 & 10 Requirement)
+          let opacity = 0.5;
+          let strokeColor = color;
+          let weight = 1.5;
+
+          if (filterMode === 'MY_PONDS') {
+            if (isMyPond) {
+              opacity = isSelected ? 0.85 : 0.65;
+              strokeColor = '#D946EF'; // Strong PANNAI magenta brand outline
+              weight = isSelected ? 4 : 2.5;
+            } else {
+              opacity = 0.15; // Muted fill for other ponds
+              strokeColor = '#9CA3AF';
+              weight = 1;
+            }
+          } else {
+            opacity = isSelected ? 0.85 : 0.5;
+            strokeColor = isSelected ? '#D946EF' : color;
+            weight = isSelected ? 3.5 : 1.5;
+          }
 
           return (
             <Polygon
               key={pond.id}
               positions={positions}
               pathOptions={{
-                color: isSelected ? '#C42A6B' : color,
+                color: strokeColor,
                 fillColor: color,
-                fillOpacity: isSelected ? 0.75 : 0.45,
-                weight: isSelected ? 3 : 1.5,
-                dashArray: pond.status === 'FIELD CHECK' ? '4, 4' : undefined,
+                fillOpacity: opacity,
+                weight: weight,
               }}
               eventHandlers={{
                 click: () => setSelectedPondId(pond.id),
               }}
             >
+              {/* Permanent tooltip label for MY PONDS */}
+              {isMyPond && (
+                <Tooltip permanent direction="center" className="my-pond-label">
+                  <span className="font-mono text-[10px] font-extrabold bg-[#11100F] text-white px-1.5 py-0.5 rounded shadow-sm">
+                    MY POND ✓ {pond.id}
+                  </span>
+                </Tooltip>
+              )}
+
               <Popup>
-                <div className="p-2 space-y-2 min-w-[200px]">
+                <div className="p-2 space-y-2 min-w-[200px] text-[#11100F]">
                   <div className="flex items-center justify-between">
-                    <span className="font-heading font-bold text-sm text-[#14100E]">{pond.id}</span>
-                    <StatusBadge status={pond.status} />
+                    <span className="font-heading font-extrabold text-sm text-[#11100F]">
+                      {isMyPond ? 'MY POND ✓ ' : ''}{pond.id}
+                    </span>
+                    <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-pink-100 text-pink-800 rounded">
+                      {pond.status}
+                    </span>
                   </div>
 
-                  <p className="text-xs text-[#69615B]">{pond.name}</p>
+                  <p className="text-xs text-stone-600 font-mono">{pond.name}</p>
 
-                  <div className="grid grid-cols-2 gap-1 text-[11px] pt-1 border-t border-[#E6DFD5]">
+                  <div className="grid grid-cols-2 gap-1 text-[11px] font-mono pt-1 border-t border-stone-200">
                     <div>
-                      <span className="text-[#69615B]">Salinity:</span>{' '}
-                      <span className="font-semibold">{pond.salinityPpt} ppt</span>
+                      <span className="text-stone-500">Salinity:</span>{' '}
+                      <span className="font-extrabold">{pond.salinityPpt} ppt</span>
                     </div>
                     <div>
-                      <span className="text-[#69615B]">Area:</span>{' '}
-                      <span className="font-semibold">{pond.areaAcres} acres</span>
-                    </div>
-                    <div>
-                      <span className="text-[#69615B]">Model Conf:</span>{' '}
-                      <span className="font-semibold">{pond.modelConfidencePercent}% DEMO</span>
-                    </div>
-                    <div>
-                      <span className="text-[#69615B]">Village:</span>{' '}
-                      <span className="font-semibold">{pond.village}</span>
+                      <span className="text-stone-500">Area:</span>{' '}
+                      <span className="font-extrabold">{pond.areaAcres} acres</span>
                     </div>
                   </div>
 
                   <button
                     onClick={() => setSelectedPondId(pond.id)}
-                    className="w-full mt-2 bg-[#14100E] hover:bg-[#C42A6B] text-white text-xs font-semibold py-1.5 rounded-lg transition-colors flex items-center justify-center space-x-1"
+                    className="w-full mt-2 bg-[#11100F] hover:bg-pink-600 text-white text-xs font-mono font-bold py-1.5 rounded-lg transition-colors flex items-center justify-center space-x-1 cursor-pointer"
                   >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Inspect Pond Details</span>
+                    <Eye className="w-3.5 h-3.5 text-pink-400" />
+                    <span>INSPECT POND INTELLIGENCE</span>
                   </button>
                 </div>
               </Popup>
@@ -122,46 +176,52 @@ export const PondMap: React.FC = () => {
         })}
       </MapContainer>
 
-      {/* Map Legend Overlay */}
-      <div className="absolute bottom-4 left-4 z-[400] bg-[#FFFCF7]/95 backdrop-blur-sm border border-[#E6DFD5] p-3 rounded-xl shadow-md space-y-2 text-xs">
-        <div className="flex items-center justify-between font-heading font-bold text-[#14100E] border-b border-[#E6DFD5] pb-1.5">
-          <div className="flex items-center space-x-1.5">
-            <Layers className="w-4 h-4 text-[#3E8B7A]" />
-            <span>POND INTELLIGENCE STATUS</span>
+      {/* Map Legend Overlay (Section 10 & 11 Requirement) */}
+      <div className="absolute bottom-4 left-4 z-[400] bg-white/95 backdrop-blur-md border border-stone-300 p-3.5 rounded-2xl shadow-lg space-y-2 text-xs font-mono select-none max-w-sm">
+        <div className="flex items-center justify-between border-b border-stone-200 pb-1.5">
+          <div className="flex items-center space-x-1.5 font-bold text-[#11100F]">
+            <Layers className="w-4 h-4 text-pink-600" />
+            <span>MAP COLOR SYSTEM</span>
           </div>
-          <DemoBadge />
+          <SourceBadge source="FIELD" />
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[11px]">
           <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-sm bg-[#8FBFB4]" />
-            <span>TOO DILUTE</span>
+            <span className="w-3 h-3 rounded-xs border-2 border-pink-500 bg-pink-100" />
+            <span className="font-extrabold text-pink-900">MY POND ✓</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-sm bg-[#3E8B7A]" />
-            <span>APPROACHING</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-sm bg-[#D9A441]" />
-            <span>CANDIDATE</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-sm bg-[#DE6A45]" />
-            <span>FIELD CHECK</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-sm bg-[#3E8B7A]" />
+            <span className="w-3 h-3 rounded-xs bg-[#059669]" />
             <span>SUITABLE</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="w-3 h-3 rounded-sm bg-[#C42A6B]" />
-            <span className="font-bold text-[#C42A6B]">HARVEST WINDOW</span>
+            <span className="w-3 h-3 rounded-xs bg-[#D97706]" />
+            <span>CANDIDATE</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="w-3 h-3 rounded-xs bg-[#E11D48]" />
+            <span>FIELD CHECK</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="w-3 h-3 rounded-xs bg-[#D946EF]" />
+            <span className="font-extrabold text-pink-600">HARVEST WINDOW</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="w-3 h-3 rounded-xs bg-[#6B7280]" />
+            <span>NOT SUITABLE</span>
           </div>
         </div>
 
-        <div className="pt-1 border-t border-[#E6DFD5] text-[10px] text-[#69615B] flex items-center justify-between">
-          <span>Satellite-assisted · Field-validated</span>
-          <span>Sentinel-2 L2A · Thoothukudi</span>
+        {/* Multi-Sensor Intelligence Legend (Section 11 Requirement) */}
+        <div className="pt-2 border-t border-stone-200 text-[10px] text-stone-600 space-y-0.5">
+          <p className="font-bold text-[#11100F]">SATELLITE INTELLIGENCE</p>
+          <p className="text-[9px] leading-tight text-stone-500">
+            Used to understand boundaries, spatial conditions & temporal changes over time.
+          </p>
+          <p className="text-[9px] font-bold text-pink-700 pt-0.5">
+            SATELLITE + SMART PAN DEVICE + WEATHER + HISTORY → PANNAI INTELLIGENCE
+          </p>
         </div>
       </div>
     </div>

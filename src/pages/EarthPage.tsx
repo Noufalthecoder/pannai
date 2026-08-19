@@ -1,72 +1,131 @@
 import React, { useState } from 'react';
-import { PondMap } from '../components/earth/PondMap';
-import { PondDrawer } from '../components/earth/PondDrawer';
 import { useApp } from '../store/AppContext';
-import { Search, Globe } from 'lucide-react';
-import { DemoBadge } from '../components/ui/Badge';
+import { FarmHeaderBar } from '../components/earth/FarmHeaderBar';
+import { PondMap } from '../components/earth/PondMap';
+import { PondIntelligenceDrawer } from '../components/earth/PondIntelligenceDrawer';
+import { PondRegisterModal } from '../components/earth/PondRegisterModal';
+import { SourceBadge } from '../components/ui/SourceBadge';
+import { ShieldCheck, Search, ChevronRight } from 'lucide-react';
+import type { Pond } from '../types';
 
 export const EarthPage: React.FC = () => {
-  const { ponds } = useApp();
-  const [filterStatus, setFilterStatus] = useState<string>('ALL');
+  const { ponds, selectedPond, setSelectedPondId } = useApp();
+
+  const [filterMode, setFilterMode] = useState<'MY_PONDS' | 'ALL_PONDS'>('MY_PONDS');
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Filter registered my ponds
+  const myPondsList = ponds.filter(
+    (p) => p.isMyPond || ['TTK-042', 'TTK-001', 'TTK-007', 'TTK-015', 'TTK-023'].includes(p.id)
+  );
+
+  const activeSelectedPond = selectedPond || myPondsList[0] || ponds[0];
+
+  const handleSelectPondInList = (pond: Pond) => {
+    setSelectedPondId(pond.id);
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Top Controls Bar */}
-      <div className="bg-[#FFFCF7] border border-[#E6DFD5] rounded-2xl p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-[#FAF0F4] border border-[#F3CBDC] flex items-center justify-center text-[#C42A6B]">
-            <Globe className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="font-heading font-bold text-lg text-[#14100E]">PANNAI EARTH</h1>
-              <DemoBadge />
+    <div className="space-y-6 max-w-[1600px] mx-auto text-[#11100F]">
+      {/* Top Farm Context Header (Section 1 Requirement) */}
+      <FarmHeaderBar
+        myPondsCount={myPondsList.length}
+        onOpenRegisterModal={() => setIsRegisterModalOpen(true)}
+      />
+
+      {/* Main Geospatial Split Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Spatial Leaflet Map with [ MY PONDS ] | [ ALL PONDS ] Toggle */}
+        <div className="lg:col-span-7 space-y-4">
+          <PondMap
+            filterMode={filterMode}
+            onFilterChange={(mode) => setFilterMode(mode)}
+          />
+        </div>
+
+        {/* Right Column: Compact MY PONDS List + Selected Pond Intelligence Drawer */}
+        <div className="lg:col-span-5 space-y-5">
+          {/* Section 4: Compact "MY PONDS" Panel */}
+          <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-2">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-pink-600" />
+                <h3 className="font-heading font-extrabold text-sm text-[#11100F]">MY PONDS ({myPondsList.length})</h3>
+              </div>
+              <SourceBadge source="FIELD" timestamp="Verified Association" />
             </div>
-            <p className="text-xs text-[#69615B]">
-              Satellite-Assisted Pond Intelligence · Thoothukudi Bioeconomy Cluster (35 Ponds Monitored)
-            </p>
-          </div>
-        </div>
 
-        {/* Filters */}
-        <div className="flex items-center space-x-2 overflow-x-auto scrollbar-none py-1">
-          <div className="relative">
-            <Search className="w-4 h-4 text-[#69615B] absolute left-3 top-2.5" />
-            <input
-              type="text"
-              placeholder="Search pond ID or farmer..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-3 py-1.5 bg-[#F7F3EC] border border-[#E6DFD5] rounded-xl text-xs text-[#14100E] focus:outline-none focus:border-[#C42A6B] w-48"
-            />
+            {/* Quick Search */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search my ponds..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 bg-[#FAF8F5] border border-stone-200 rounded-xl text-xs font-mono focus:outline-none"
+              />
+            </div>
+
+            {/* List of Registered Ponds (Section 4 Requirement) */}
+            <div className="space-y-1.5 font-mono text-xs max-h-48 overflow-y-auto pr-1">
+              {myPondsList
+                .filter((p) => p.id.toLowerCase().includes(searchQuery.toLowerCase()))
+                .map((p) => {
+                  const isCurrent = activeSelectedPond?.id === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => handleSelectPondInList(p)}
+                      className={`w-full p-2.5 rounded-xl border flex items-center justify-between transition-all cursor-pointer ${
+                        isCurrent
+                          ? 'bg-pink-600 text-white border-pink-600 font-bold shadow-xs'
+                          : 'bg-[#FAF8F5] hover:bg-stone-100 border-stone-200 text-stone-900'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold">{p.id}</span>
+                        <span className="text-[10px] opacity-80 font-normal truncate max-w-[120px] sm:max-w-none">
+                          {p.name.split(' ')[0]} ({p.salinityPpt} ppt)
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${
+                            isCurrent
+                              ? 'bg-white text-pink-800'
+                              : p.status === 'SUITABLE' || p.status === 'HARVEST WINDOW'
+                              ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                              : p.status === 'FIELD CHECK'
+                              ? 'bg-rose-100 text-rose-900 border border-rose-300'
+                              : 'bg-amber-100 text-amber-900 border border-amber-300'
+                          }`}
+                        >
+                          {p.status}
+                        </span>
+                        <ChevronRight className="w-3.5 h-3.5 opacity-60" />
+                      </div>
+                    </button>
+                  );
+                })}
+            </div>
           </div>
 
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="px-3 py-1.5 bg-[#F7F3EC] border border-[#E6DFD5] rounded-xl text-xs font-semibold text-[#14100E] focus:outline-none focus:border-[#C42A6B]"
-          >
-            <option value="ALL">ALL STATUSES ({ponds.length})</option>
-            <option value="TOO DILUTE">TOO DILUTE</option>
-            <option value="APPROACHING">APPROACHING</option>
-            <option value="CANDIDATE">CANDIDATE</option>
-            <option value="FIELD CHECK">FIELD CHECK</option>
-            <option value="SUITABLE">SUITABLE</option>
-            <option value="HARVEST WINDOW">HARVEST WINDOW</option>
-          </select>
+          {/* Selected Pond Detail Drawer (Sections 5, 6, 7, 8) */}
+          <PondIntelligenceDrawer
+            pond={activeSelectedPond}
+            onClose={() => {}}
+          />
         </div>
       </div>
 
-      {/* Main Grid View */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 h-[calc(100vh-12rem)]">
-        <div className="lg:col-span-8 h-full">
-          <PondMap />
-        </div>
-        <div className="lg:col-span-4 h-full">
-          <PondDrawer />
-        </div>
-      </div>
+      {/* 5-Step Pond Registration Modal (Section 9 Requirement) */}
+      <PondRegisterModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+      />
     </div>
   );
 };

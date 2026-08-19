@@ -1,76 +1,99 @@
 @import "tailwindcss";
 
-:root {
-  --bg-primary: #F7F3EC;
-  --bg-surface: #FFFCF7;
-  --text-main: #14100E;
-  --text-muted: #69615B;
-  --brand-magenta: #C42A6B;
-  --brand-brine: #3E8B7A;
+@layer base {
+  :root {
+    --bg-primary: #F7F3ED;
+    --bg-surface: #FFFFFF;
+    --bg-surface-elevated: #FAF8F5;
+    --text-primary: #11100F;
+    --text-secondary: #57534E;
+    --text-muted: #78716C;
+    --brand-dark: #11100F;
+    --brand-marine: #0D3B66;
+    --brand-pink: #D946EF;
+    --brand-green: #059669;
+    --brand-amber: #D97706;
+    --brand-coral: #E11D48;
+    --border-subtle: rgba(214, 206, 194, 0.6);
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4, .font-heading {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  .font-tamil {
+    font-family: 'Noto Sans Tamil', 'Inter', sans-serif;
+  }
 }
 
-body {
-  margin: 0;
-  background-color: var(--bg-primary);
-  color: var(--text-main);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
-
-h1, h2, h3, h4, .font-heading {
-  font-family: 'Space Grotesk', sans-serif;
-  letter-spacing: -0.02em;
-}
-
-.font-tamil {
-  font-family: 'Noto Sans Tamil', sans-serif;
-}
-
-/* Custom scrollbars */
+/* Custom subtle scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #F7F3EC;
+  background: #F7F3ED;
 }
 ::-webkit-scrollbar-thumb {
-  background: #D9D2C7;
-  border-radius: 4px;
+  background: #D6CEC2;
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #C4BBB0;
+  background: #B8ADA0;
 }
 
-/* Leaflet Overrides */
+/* Leaflet Geospatial Map Customizations */
 .leaflet-container {
   width: 100%;
   height: 100%;
-  background: #e3ded6 !important;
+  background: #EAE5DC !important;
   font-family: 'Inter', sans-serif !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: #FFFCF7 !important;
-  color: #14100E !important;
-  border-radius: 12px !important;
-  border: 1px solid #E6DFD5 !important;
-  box-shadow: 0 10px 25px -5px rgba(20, 16, 14, 0.1) !important;
+  background: #FFFFFF !important;
+  color: #11100F !important;
+  border-radius: 10px !important;
+  border: 1px solid #E5E0D8 !important;
+  box-shadow: 0 12px 30px -8px rgba(17, 16, 15, 0.12) !important;
+  padding: 4px !important;
 }
 
 .leaflet-popup-tip {
-  background: #FFFCF7 !important;
+  background: #FFFFFF !important;
 }
 
-/* Pulse animation for active guided demo elements */
-@keyframes pulse-ring {
-  0% { transform: scale(0.95); opacity: 0.8; }
-  50% { transform: scale(1.05); opacity: 0.4; }
-  100% { transform: scale(0.95); opacity: 0.8; }
+/* Radar scan animation line for Earth satellite view */
+@keyframes scan-line {
+  0% { transform: translateY(-100%); opacity: 0.3; }
+  50% { opacity: 0.7; }
+  100% { transform: translateY(1000%); opacity: 0.3; }
 }
 
-.pulse-highlight {
-  box-shadow: 0 0 0 4px rgba(196, 42, 107, 0.4);
-  animation: pulse-ring 2s infinite ease-in-out;
+.animate-scan {
+  animation: scan-line 8s ease-in-out infinite;
 }
+
+/* Guided Demo highlight pulse */
+@keyframes demo-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(217, 70, 239, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0); }
+}
+
+.demo-highlight {
+  animation: demo-pulse 2s infinite;
+  border-color: #D946EF !important;
+}
+

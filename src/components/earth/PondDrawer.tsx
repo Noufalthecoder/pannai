@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import { useApp } from '../../store/AppContext';
-import { StatusBadge, DemoBadge } from '../ui/Badge';
+import { SourceBadge } from '../ui/SourceBadge';
 import { useNavigate } from 'react-router-dom';
 import {
   Send,
   History,
   MapPin,
-  Thermometer,
-  Droplets,
-  Ruler,
-  Satellite,
-  Calendar,
   AlertCircle,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+
 
 export const PondDrawer: React.FC = () => {
   const { selectedPond, sendAdvisory, guidedDemoStep, nextGuidedDemoStep } = useApp();
@@ -22,165 +18,160 @@ export const PondDrawer: React.FC = () => {
 
   if (!selectedPond) {
     return (
-      <div className="bg-[#FFFCF7] border border-[#E6DFD5] rounded-2xl p-6 text-center text-[#69615B] h-full flex flex-col items-center justify-center space-y-3">
-        <MapPin className="w-8 h-8 text-[#8FBFB4]" />
-        <p className="font-heading font-semibold text-sm text-[#14100E]">No Pond Selected</p>
-        <p className="text-xs">Click any salt pan polygon on the map to inspect satellite telemetry and field observations.</p>
+      <div className="bg-white border border-stone-200/90 rounded-2xl p-6 text-center text-stone-500 h-full flex flex-col items-center justify-center space-y-3">
+        <MapPin className="w-8 h-8 text-stone-400" />
+        <p className="font-heading font-semibold text-sm text-[#11100F]">No Pond Selected</p>
+        <p className="text-xs max-w-xs">Select any salt pan on the map to inspect satellite telemetry and field status.</p>
       </div>
     );
   }
 
   const handleSendAdvisory = () => {
     sendAdvisory(selectedPond.id);
-    if (guidedDemoStep === 1) {
+    if (guidedDemoStep === 1 || guidedDemoStep === 2) {
       nextGuidedDemoStep();
       navigate('/farmer');
     }
   };
 
+  const getStatusBadge = () => {
+    switch (selectedPond.status) {
+      case 'CANDIDATE':
+        return 'bg-amber-50 text-amber-900 border-amber-300';
+      case 'FIELD CHECK':
+        return 'bg-rose-50 text-rose-900 border-rose-300';
+      case 'SUITABLE':
+        return 'bg-emerald-50 text-emerald-900 border-emerald-300';
+      default:
+        return 'bg-stone-100 text-stone-800 border-stone-300';
+    }
+  };
+
   return (
-    <div className="bg-[#FFFCF7] border border-[#E6DFD5] rounded-2xl p-5 shadow-sm space-y-5 relative h-full flex flex-col justify-between overflow-y-auto">
+    <div className="bg-white border border-stone-200/90 rounded-2xl p-5 shadow-sm space-y-5 relative h-full flex flex-col justify-between overflow-y-auto">
       {/* Header */}
       <div className="space-y-3">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center space-x-2">
-              <h2 className="font-heading font-bold text-xl text-[#14100E]">POND {selectedPond.id}</h2>
-              <DemoBadge />
+              <h2 className="font-heading font-bold text-xl text-[#11100F]">POND {selectedPond.id}</h2>
+              <SourceBadge source="DEMO" />
             </div>
-            <p className="text-xs text-[#69615B] flex items-center space-x-1 mt-0.5">
-              <MapPin className="w-3.5 h-3.5 text-[#3E8B7A]" />
+            <p className="text-xs text-stone-500 flex items-center space-x-1 mt-0.5 font-mono">
+              <MapPin className="w-3.5 h-3.5 text-stone-400" />
               <span>{selectedPond.village}, {selectedPond.district}</span>
             </p>
           </div>
-          <StatusBadge status={selectedPond.status} />
-        </div>
-
-        {/* Satellite Guardrail Badge */}
-        <div className="inline-flex items-center space-x-1.5 px-3 py-1 bg-[#F7F3EC] border border-[#E6DFD5] rounded-full text-[11px] text-[#69615B]">
-          <Satellite className="w-3.5 h-3.5 text-[#3E8B7A]" />
-          <span>Satellite-assisted · Field-validated</span>
-        </div>
-      </div>
-
-      {/* Model Confidence & Area */}
-      <div className="grid grid-cols-2 gap-3 bg-[#F7F3EC] p-3.5 rounded-xl border border-[#E6DFD5]">
-        <div>
-          <span className="text-[11px] text-[#69615B] uppercase font-mono tracking-wider">AREA</span>
-          <p className="font-heading font-bold text-lg text-[#14100E]">{selectedPond.areaAcres} acres</p>
-        </div>
-        <div>
-          <span className="text-[11px] text-[#69615B] uppercase font-mono tracking-wider">MODEL CONFIDENCE</span>
-          <p className="font-heading font-bold text-lg text-[#C42A6B]">
-            {selectedPond.modelConfidencePercent}% <span className="text-xs font-normal text-[#69615B]">· DEMO</span>
-          </p>
-        </div>
-      </div>
-
-      {/* Telemetry Details */}
-      <div className="space-y-2.5">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-[#69615B]">ENVIRONMENTAL TELEMETRY</h3>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="bg-white p-2.5 rounded-lg border border-[#E6DFD5] flex items-center space-x-2.5">
-            <Droplets className="w-4 h-4 text-[#3E8B7A]" />
-            <div>
-              <span className="text-[10px] text-[#69615B] block">SALINITY</span>
-              <span className="font-bold text-[#14100E]">{selectedPond.salinityPpt} ppt</span>
-            </div>
-          </div>
-          <div className="bg-white p-2.5 rounded-lg border border-[#E6DFD5] flex items-center space-x-2.5">
-            <Thermometer className="w-4 h-4 text-[#DE6A45]" />
-            <div>
-              <span className="text-[10px] text-[#69615B] block">TEMP</span>
-              <span className="font-bold text-[#14100E]">{selectedPond.temperatureC} °C</span>
-            </div>
-          </div>
-          <div className="bg-white p-2.5 rounded-lg border border-[#E6DFD5] flex items-center space-x-2.5">
-            <Ruler className="w-4 h-4 text-[#D9A441]" />
-            <div>
-              <span className="text-[10px] text-[#69615B] block">DEPTH</span>
-              <span className="font-bold text-[#14100E]">{selectedPond.waterDepthCm} cm</span>
-            </div>
-          </div>
-          <div className="bg-white p-2.5 rounded-lg border border-[#E6DFD5] flex items-center space-x-2.5">
-            <Calendar className="w-4 h-4 text-[#8FBFB4]" />
-            <div>
-              <span className="text-[10px] text-[#69615B] block">FIELD CHECK</span>
-              <span className="font-semibold text-[#14100E]">{selectedPond.lastFieldCheck}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recommendation Block */}
-      <div className="bg-[#FAF0F4] border border-[#F3CBDC] p-4 rounded-xl space-y-2">
-        <div className="flex items-center space-x-2">
-          <AlertCircle className="w-4 h-4 text-[#C42A6B]" />
-          <span className="font-heading font-bold text-xs uppercase tracking-wider text-[#C42A6B]">
-            RECOMMENDED ACTION
+          <span className={`px-2.5 py-1 text-[11px] font-mono font-bold uppercase rounded-md border ${getStatusBadge()}`}>
+            {selectedPond.status}
           </span>
         </div>
-        <p className="font-heading font-bold text-base text-[#14100E]">
-          {selectedPond.recommendedAction}
+      </div>
+
+      {/* Primary Key Measurements (Section 8 requirement) */}
+      <div className="space-y-2">
+        <span className="text-[10px] font-mono tracking-widest text-stone-500 uppercase font-semibold">
+          PRIMARY MEASUREMENTS
+        </span>
+
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {/* SALINITY */}
+          <div className="bg-[#FAF8F5] p-3 rounded-xl border border-stone-200/80 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-stone-500 font-mono">SALINITY</span>
+              <SourceBadge source="FIELD" />
+            </div>
+            <p className="font-bold text-lg text-[#11100F]">{selectedPond.salinityPpt} ppt</p>
+          </div>
+
+          {/* TEMPERATURE */}
+          <div className="bg-[#FAF8F5] p-3 rounded-xl border border-stone-200/80 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-stone-500 font-mono">TEMP</span>
+              <SourceBadge source="SATELLITE" />
+            </div>
+            <p className="font-bold text-lg text-[#11100F]">{selectedPond.temperatureC}°C</p>
+          </div>
+
+          {/* WATER DEPTH */}
+          <div className="bg-[#FAF8F5] p-3 rounded-xl border border-stone-200/80 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-stone-500 font-mono">WATER DEPTH</span>
+              <SourceBadge source="FIELD" />
+            </div>
+            <p className="font-bold text-lg text-[#11100F]">{selectedPond.waterDepthCm} cm</p>
+          </div>
+
+          {/* MODEL CONFIDENCE */}
+          <div className="bg-[#FAF8F5] p-3 rounded-xl border border-stone-200/80 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-stone-500 font-mono">CONFIDENCE</span>
+              <SourceBadge source="MODEL" />
+            </div>
+            <p className="font-bold text-lg text-purple-700">{selectedPond.modelConfidencePercent}%</p>
+          </div>
+        </div>
+      </div>
+
+      {/* PANNAI RECOMMENDATION (Prioritizing Decisions over Data) */}
+      <div className="bg-amber-50/90 border border-amber-200/90 p-4 rounded-xl space-y-2">
+        <div className="flex items-center space-x-2">
+          <AlertCircle className="w-4 h-4 text-amber-700" />
+          <span className="font-mono font-bold text-xs uppercase tracking-wider text-amber-900">
+            PANNAI RECOMMENDATION
+          </span>
+        </div>
+        <p className="font-heading font-bold text-sm text-[#11100F]">
+          FIELD CHECK REQUIRED
         </p>
-        <p className="text-xs text-[#69615B] leading-relaxed">
-          Potential Artemia cyst production window approaching. Maintain current water depth and verify salinity parameters during Friday field visit.
+        <p className="text-xs text-amber-900 leading-relaxed">
+          "Verify salinity and water depth before proceeding."
         </p>
-        <div className="text-xs font-tamil text-[#C42A6B] bg-white/80 p-2 rounded-lg border border-[#F3CBDC]">
+        <div className="text-xs font-tamil font-medium text-amber-900 bg-white/90 p-2 rounded-lg border border-amber-200">
           {selectedPond.recommendedActionTamil}
         </div>
       </div>
 
-      {/* History Drawer Toggle */}
+      {/* Historical Timeline Toggle */}
       <button
         onClick={() => setShowHistory(!showHistory)}
-        className="w-full text-xs font-medium text-[#69615B] hover:text-[#14100E] flex items-center justify-center space-x-1 py-1"
+        className="w-full text-xs font-mono text-stone-500 hover:text-stone-900 flex items-center justify-center space-x-1 py-1 cursor-pointer"
       >
         <History className="w-3.5 h-3.5" />
-        <span>{showHistory ? 'Hide Pond History' : 'View Pond Historical Timeline'}</span>
+        <span>{showHistory ? 'Hide Timeline' : 'View Observation Timeline'}</span>
       </button>
 
-      {/* History View */}
+      {/* Historical Timeline */}
       {showHistory && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
-          className="bg-[#F7F3EC] p-3 rounded-xl border border-[#E6DFD5] space-y-2 text-xs"
+          className="bg-[#FAF8F5] p-3 rounded-xl border border-stone-200 text-xs space-y-2 font-mono"
         >
-          <span className="font-bold text-[11px] text-[#14100E] block border-b border-[#E6DFD5] pb-1">
-            POND {selectedPond.id} TIMELINE
+          <span className="font-bold text-[11px] text-[#11100F] block border-b border-stone-200 pb-1">
+            TIMELINE HISTORY · {selectedPond.id}
           </span>
-          <div className="space-y-2 text-[11px]">
-            <div className="flex items-start space-x-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#3E8B7A] mt-1 shrink-0" />
-              <div>
-                <span className="font-semibold text-[#14100E]">Satellite Observation</span> — 2 days ago (Sentinel-2)
-              </div>
+          <div className="space-y-1.5 text-[11px]">
+            <div className="flex items-center justify-between">
+              <span>Sentinel-2 Satellite Scan</span>
+              <SourceBadge source="SATELLITE" timestamp="2d ago" />
             </div>
-            <div className="flex items-start space-x-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D9A441] mt-1 shrink-0" />
-              <div>
-                <span className="font-semibold text-[#14100E]">Field Salinity Check</span> — Yesterday (92 ppt verified)
-              </div>
-            </div>
-            <div className="flex items-start space-x-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C42A6B] mt-1 shrink-0" />
-              <div>
-                <span className="font-semibold text-[#14100E]">Advisory Generated</span> — Action: Field Check Friday
-              </div>
+            <div className="flex items-center justify-between">
+              <span>Ground Salinity Refractometer</span>
+              <SourceBadge source="FIELD" timestamp="Yesterday" />
             </div>
           </div>
         </motion.div>
       )}
 
-      {/* Action Buttons */}
-      <div className="space-y-2 pt-2 border-t border-[#E6DFD5]">
+      {/* Primary Action Button */}
+      <div className="pt-2 border-t border-stone-200">
         <button
           onClick={handleSendAdvisory}
-          className={`w-full py-3 px-4 rounded-xl text-xs font-bold text-white shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-98 ${
-            guidedDemoStep === 1
-              ? 'bg-[#C42A6B] hover:bg-[#A8225A] pulse-highlight'
-              : 'bg-[#C42A6B] hover:bg-[#A8225A]'
+          className={`w-full py-3 px-4 rounded-xl text-xs font-mono font-bold text-white shadow-md flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+            guidedDemoStep === 1 || guidedDemoStep === 2
+              ? 'bg-pink-600 hover:bg-pink-500 demo-highlight'
+              : 'bg-pink-600 hover:bg-pink-500'
           }`}
         >
           <Send className="w-4 h-4" />

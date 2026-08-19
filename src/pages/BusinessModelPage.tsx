@@ -1,89 +1,133 @@
 import React from 'react';
-import { TrendingUp } from 'lucide-react';
-import { DemoBadge } from '../components/ui/Badge';
+import { TrendingUp, RefreshCw } from 'lucide-react';
+import { SourceBadge } from '../components/ui/SourceBadge';
+
 
 export const BusinessModelPage: React.FC = () => {
+  const revenueStreams = [
+    {
+      code: '01',
+      title: 'Hardware',
+      subtitle: 'Field Telemetry Kits',
+      desc: 'Deployable refractometers, water depth sensors, and field telemetry kits provided to salt clusters.',
+      tag: 'CAPEX / DEPLOYMENT',
+    },
+    {
+      code: '02',
+      title: 'SaaS',
+      subtitle: 'Enterprise Pond Intelligence',
+      desc: 'Subscription dashboard for salt-pan operators, leaseholders, and enterprise coastal management.',
+      tag: 'RECURRING SAAS',
+    },
+    {
+      code: '03',
+      title: 'Certification',
+      subtitle: 'QC & Digital Batch Passport',
+      desc: 'Per-batch fee for physical 24-hr lab hatchability testing, moisture validation, and QR passports.',
+      tag: 'PER-BATCH FEE',
+    },
+    {
+      code: '04',
+      title: 'Marketplace',
+      subtitle: 'B2B Artemia Procurement',
+      desc: '3–5% transaction fee on verified Artemia cyst lot reservations executed through PANNAI Market.',
+      tag: 'TRANSACTION TAKE-RATE',
+    },
+    {
+      code: '05',
+      title: 'B2B / B2G',
+      subtitle: 'Coastal Bioeconomy Contracts',
+      desc: 'State aquaculture development contracts, coastal climate resilience data, and enterprise supply guarantees.',
+      tag: 'ENTERPRISE / B2G CONTRACTS',
+    },
+  ];
+
   return (
-    <div className="space-y-10 max-w-5xl mx-auto py-4">
+    <div className="space-y-10 max-w-5xl mx-auto text-[#11100F] pb-10">
       {/* Header */}
-      <div className="bg-[#FFFCF7] border border-[#E6DFD5] rounded-3xl p-8 shadow-xs space-y-3">
-        <div className="flex items-center space-x-2">
-          <TrendingUp className="w-5 h-5 text-[#C42A6B]" />
-          <h1 className="font-heading font-bold text-2xl sm:text-3xl text-[#14100E]">
-            COMMERCIAL MODEL & EXPANSION ROADMAP
-          </h1>
-          <DemoBadge />
+      <div className="bg-white border border-stone-200/90 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <div className="w-10 h-10 rounded-xl bg-pink-50 border border-pink-200 flex items-center justify-center text-pink-700">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <h1 className="font-heading font-bold text-2xl text-[#11100F]">PANNAI BUSINESS MODEL</h1>
+              <SourceBadge source="DEMO" />
+            </div>
+            <p className="text-xs text-stone-600">
+              Investor & Venture Strategy · Commercial Monetization Streams & Growth Flywheel
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-[#69615B]">
-          How PANNAI monetizes digital bioeconomy infrastructure and scales across coastal salt belts.
-        </p>
       </div>
 
-      {/* Revenue Streams Grid */}
+      {/* 5 REVENUE STREAMS GRID (Section 15 Requirement) */}
       <div className="space-y-4">
-        <h2 className="font-heading font-bold text-lg text-[#14100E]">POTENTIAL REVENUE STREAMS</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-          <div className="bg-[#FFFCF7] border border-[#E6DFD5] p-5 rounded-2xl space-y-2">
-            <span className="text-[10px] font-mono text-[#C42A6B] font-bold block uppercase">STREAM 01</span>
-            <h3 className="font-heading font-bold text-base text-[#14100E]">B2B Marketplace Fee</h3>
-            <p className="text-[#69615B] leading-relaxed">
-              3–5% transaction fee on verified Artemia cyst lot reservations executed through PANNAI Market.
-            </p>
-            <span className="text-[10px] font-mono text-[#69615B] block pt-2 border-t border-[#E6DFD5]">Illustrative Pricing</span>
+        <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+          <div>
+            <span className="text-[10px] font-mono tracking-widest text-pink-600 uppercase font-semibold block">
+              MONETIZATION ARCHITECTURE
+            </span>
+            <h2 className="font-heading font-bold text-xl text-[#11100F]">FIVE REVENUE STREAMS</h2>
           </div>
+          <SourceBadge source="DEMO" />
+        </div>
 
-          <div className="bg-[#FFFCF7] border border-[#E6DFD5] p-5 rounded-2xl space-y-2">
-            <span className="text-[10px] font-mono text-[#3E8B7A] font-bold block uppercase">STREAM 02</span>
-            <h3 className="font-heading font-bold text-base text-[#14100E]">Processing & Certification</h3>
-            <p className="text-[#69615B] leading-relaxed">
-              Fee per kg for lab hatchability testing, moisture verification, and Digital Batch Passport generation.
-            </p>
-            <span className="text-[10px] font-mono text-[#69615B] block pt-2 border-t border-[#E6DFD5]">Illustrative Pricing</span>
-          </div>
-
-          <div className="bg-[#FFFCF7] border border-[#E6DFD5] p-5 rounded-2xl space-y-2">
-            <span className="text-[10px] font-mono text-[#D9A441] font-bold block uppercase">STREAM 03</span>
-            <h3 className="font-heading font-bold text-base text-[#14100E]">Enterprise Hatchery Tools</h3>
-            <p className="text-[#69615B] leading-relaxed">
-              Subscription SaaS portal for large commercial hatcheries requiring forward supply guarantees & API integration.
-            </p>
-            <span className="text-[10px] font-mono text-[#69615B] block pt-2 border-t border-[#E6DFD5]">Illustrative Pricing</span>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs font-mono">
+          {revenueStreams.map((stream) => (
+            <div
+              key={stream.code}
+              className="bg-white border border-stone-200/90 p-4 rounded-xl space-y-2 flex flex-col justify-between shadow-xs hover:border-pink-300 transition-colors"
+            >
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold text-pink-600 block">{stream.code}</span>
+                <h3 className="font-heading font-bold text-base text-[#11100F]">{stream.title}</h3>
+                <p className="text-[11px] font-semibold text-stone-700 font-sans">{stream.subtitle}</p>
+                <p className="text-[11px] text-stone-500 font-sans leading-relaxed pt-1">{stream.desc}</p>
+              </div>
+              <div className="pt-2 border-t border-stone-100 text-[9px] text-stone-500 font-bold">
+                {stream.tag}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Geographic Scale Expansion Roadmap */}
-      <div className="bg-[#FFFCF7] border border-[#E6DFD5] rounded-3xl p-8 space-y-6">
-        <h2 className="font-heading font-bold text-lg text-[#14100E] border-b border-[#E6DFD5] pb-3">
-          GEOGRAPHIC EXPANSION ROADMAP
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
-          <div className="bg-[#FAF0F4] border border-[#F3CBDC] p-4 rounded-2xl space-y-2">
-            <span className="font-bold text-[#C42A6B] block">PHASE 1 (CURRENT PILOT)</span>
-            <h4 className="font-bold text-sm text-[#14100E]">Thoothukudi, TN</h4>
-            <p className="text-[#69615B] text-[11px]">5–10 pilot salt ponds. Baseline salinity & Artemia suitability validation.</p>
+      {/* FLYWHEEL VISUAL (Section 15 Requirement) */}
+      <div className="bg-[#11100F] text-white rounded-2xl p-8 border border-stone-800 shadow-xl space-y-6">
+        <div className="flex items-center justify-between border-b border-stone-800 pb-4">
+          <div className="flex items-center space-x-2">
+            <RefreshCw className="w-5 h-5 text-pink-400 animate-spin-slow" />
+            <h3 className="font-heading font-bold text-xl text-white">THE PANNAI GROWTH FLYWHEEL</h3>
           </div>
+          <SourceBadge source="DEMO" />
+        </div>
 
-          <div className="bg-[#F7F3EC] border border-[#E6DFD5] p-4 rounded-2xl space-y-2">
-            <span className="font-bold text-[#3E8B7A] block">PHASE 2</span>
-            <h4 className="font-bold text-sm text-[#14100E]">Tamil Nadu Coast</h4>
-            <p className="text-[#69615B] text-[11px]">Expand across Marakkanam, Vedaranyam & Ramanathapuram salt belts.</p>
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 text-center text-xs font-mono">
+          <div className="bg-stone-900 border border-stone-800 p-3 rounded-xl font-bold text-stone-200">
+            MORE FARMS
           </div>
-
-          <div className="bg-[#F7F3EC] border border-[#E6DFD5] p-4 rounded-2xl space-y-2">
-            <span className="font-bold text-[#D9A441] block">PHASE 3</span>
-            <h4 className="font-bold text-sm text-[#14100E]">All India Salt Belts</h4>
-            <p className="text-[#69615B] text-[11px]">Scale to Gujarat (Little Rann of Kutch), Andhra Pradesh & Odisha.</p>
+          <div className="bg-stone-900 border border-stone-800 p-3 rounded-xl font-bold text-pink-400">
+            MORE DATA
           </div>
-
-          <div className="bg-[#F7F3EC] border border-[#E6DFD5] p-4 rounded-2xl space-y-2">
-            <span className="font-bold text-[#69615B] block">PHASE 4</span>
-            <h4 className="font-bold text-sm text-[#14100E]">Global Bioeconomy</h4>
-            <p className="text-[#69615B] text-[11px]">Select hypersaline salt producing regions across South & SE Asia.</p>
+          <div className="bg-stone-900 border border-stone-800 p-3 rounded-xl font-bold text-purple-400">
+            BETTER INTELLIGENCE
+          </div>
+          <div className="bg-stone-900 border border-stone-800 p-3 rounded-xl font-bold text-blue-400">
+            BETTER DECISIONS
+          </div>
+          <div className="bg-stone-900 border border-stone-800 p-3 rounded-xl font-bold text-emerald-400">
+            MORE VALUE
+          </div>
+          <div className="bg-stone-900 border border-stone-800 p-3 rounded-xl font-bold text-amber-400">
+            MORE FARMERS
           </div>
         </div>
+
+        <p className="text-xs text-stone-400 text-center max-w-xl mx-auto leading-relaxed">
+          Each newly onboarded salt-pan pond expands ground truth observation density, refining regional Artemia suitability algorithms and attracting more hatchery buyers to the platform.
+        </p>
       </div>
     </div>
   );

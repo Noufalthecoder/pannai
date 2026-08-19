@@ -50,8 +50,11 @@ export interface Pond {
   lastFieldCheck: string; // e.g. "Yesterday"
   recommendedAction: string;
   recommendedActionTamil: string;
+  isMyPond?: boolean;
+  deviceId?: string;
   isDemo: boolean;
 }
+
 
 export interface Advisory {
   id: string;
@@ -183,4 +186,69 @@ export interface FarmerIncomeRecord {
   isDemo: boolean;
 }
 
-export type GuidedDemoStep = 1 | 2 | 3 | 4 | 5 | null;
+export type DataSourceType = 'SATELLITE' | 'FIELD' | 'WEATHER' | 'LAB' | 'MODEL' | 'DEMO';
+
+export type GuidedDemoStep = 1 | 2 | 3 | 4 | 5 | 6 | null;
+
+export type PlatformViewMode = 'FARMER' | 'OPERATOR';
+
+export type SimpleStatusWord = 'GOOD' | 'WATCH' | 'CHECK' | 'ACTION_NEEDED';
+
+
+export type OrderStageStatus = 'PENDING' | 'CONFIRMED' | 'IN_TRANSIT' | 'DELIVERED' | 'COMPLETED';
+
+export interface MarketOrder {
+  id: string; // PN-ORD-00821
+  lotId: string;
+  batchId: string;
+  productName: string;
+  grade: QualityGrade;
+  quantityKg: number;
+  pricePerKgINR: number;
+  totalValueINR: number;
+  platformFeeINR: number;
+  logisticsFeeINR: number;
+  netPayoutINR: number;
+  buyerName: string;
+  buyerCompany: string;
+  buyerType: string;
+  buyerLocation: string;
+  buyerDistanceKm: number;
+  producerName: string;
+  originPondId: string;
+  orderDate: string;
+  dispatchedDate?: string;
+  expectedDeliveryDate?: string;
+  deliveredDate?: string;
+  status: OrderStageStatus;
+  stagesCompleted: {
+    orderPlaced: boolean;
+    buyerConfirmed: boolean;
+    batchVerified: boolean;
+    packed: boolean;
+    dispatched: boolean;
+    inTransit: boolean;
+    delivered: boolean;
+    payoutReleased: boolean;
+  };
+  isDemo: boolean;
+}
+
+export interface MarketBuyerRequest {
+  id: string;
+  buyerName: string;
+  buyerCompany: string;
+  region: 'Local' | 'Southeast Asia' | 'Middle East' | 'Sri Lanka';
+  buyerType: string;
+  demandKg: number;
+  product: string;
+  requiredGrade: QualityGrade;
+  requiredHatchabilityPercent: number;
+  distanceKm?: number;
+  indicativePriceINR: number;
+  matchScorePercent: number;
+  matchReasons: string[];
+  isDemo: boolean;
+}
+
+

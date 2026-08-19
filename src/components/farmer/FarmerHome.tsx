@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../../store/AppContext';
-import { Volume2, CheckCircle2, Home, Layers, IndianRupee, HelpCircle, Globe2 } from 'lucide-react';
+import { Volume2, CheckCircle2, Home, Layers, IndianRupee, HelpCircle, Sun, CloudRain, Sparkles, ChevronDown, ChevronUp, Cpu, PhoneCall } from 'lucide-react';
+import { SourceBadge } from '../ui/SourceBadge';
+import { useNavigate } from 'react-router-dom';
 
 export const FarmerHome: React.FC = () => {
   const {
+    ponds,
     advisories,
     acknowledgeAdvisory,
     language,
@@ -11,23 +14,22 @@ export const FarmerHome: React.FC = () => {
     guidedDemoStep,
     nextGuidedDemoStep,
     farmerIncome,
+    setIsHelpModalOpen,
   } = useApp();
 
+
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState<'today' | 'ponds' | 'income' | 'help'>('today');
-  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
-  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [showLevel3Data, setShowLevel3Data] = useState<boolean>(false);
+  const [isPlayingVoice, setIsPlayingVoice] = useState<boolean>(false);
 
   const activeAdvisory = advisories.find((a) => a.pondId === 'TTK-042') || advisories[0];
 
   const speakTamilAdvisory = () => {
-    if (!('speechSynthesis' in window)) {
-      setVoiceError('இந்த சாதனத்தில் தமிழ் குரல் கிடைக்கவில்லை.');
-      return;
-    }
-
+    if (!('speechSynthesis' in window)) return;
     try {
-      window.speechSynthesis.cancel(); // Stop any active speech
-
+      window.speechSynthesis.cancel();
       const textToSpeak = activeAdvisory
         ? `${activeAdvisory.tamilTitle}. ${activeAdvisory.tamilInstruction}. ${activeAdvisory.tamilDetails}`
         : 'வணக்கம். இன்று செய்ய வேண்டியது. வெள்ளிக்கிழமை குளத்தை நேரில் சரிபார்க்கவும்.';
@@ -36,24 +38,13 @@ export const FarmerHome: React.FC = () => {
       utterance.lang = 'ta-IN';
       utterance.rate = 0.9;
 
-      utterance.onstart = () => {
-        setIsPlayingVoice(true);
-        setVoiceError(null);
-      };
-
-      utterance.onend = () => {
-        setIsPlayingVoice(false);
-      };
-
-      utterance.onerror = () => {
-        setIsPlayingVoice(false);
-        setVoiceError('இந்த சாதனத்தில் தமிழ் குரல் கிடைக்கவில்லை.');
-      };
+      utterance.onstart = () => setIsPlayingVoice(true);
+      utterance.onend = () => setIsPlayingVoice(false);
+      utterance.onerror = () => setIsPlayingVoice(false);
 
       window.speechSynthesis.speak(utterance);
     } catch {
       setIsPlayingVoice(false);
-      setVoiceError('இந்த சாதனத்தில் தமிழ் குரல் கிடைக்கவில்லை.');
     }
   };
 
@@ -61,191 +52,318 @@ export const FarmerHome: React.FC = () => {
     if (activeAdvisory) {
       acknowledgeAdvisory(activeAdvisory.id);
     }
-    if (guidedDemoStep === 2) {
+    if (guidedDemoStep === 2 || guidedDemoStep === 3) {
       nextGuidedDemoStep();
     }
   };
 
   return (
-    <div className="space-y-4 font-tamil flex flex-col justify-between h-full">
-      {/* Top Bar with Language Selector */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#E6DFD5]">
+    <div className="space-y-5 flex flex-col justify-between h-full text-[#11100F] font-mono select-none">
+      {/* Top Header & Simple Greeting (Section 3 Requirement) */}
+      <div className="bg-white border-2 border-stone-300 rounded-3xl p-5 shadow-xs flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-[#14100E]">வணக்கம் 👋</h1>
-          <p className="text-xs text-[#69615B]">முத்துசாமி (மன்னார் வளைகுடா)</p>
+          <h1 className="text-xl font-heading font-extrabold text-[#11100F] tracking-tight">
+            {language === 'ta' ? 'வணக்கம், முத்து 👋' : 'WELCOME, MUTHU 👋'}
+          </h1>
+          <p className="text-xs font-bold text-stone-600">Tharuvaikulam Salt Pan Cluster</p>
         </div>
 
         <button
           onClick={() => setLanguage(language === 'ta' ? 'en' : 'ta')}
-          className="flex items-center space-x-1 px-2.5 py-1 bg-[#F7F3EC] border border-[#E6DFD5] rounded-full text-xs font-sans text-[#14100E]"
+          className="px-3.5 py-2 bg-pink-50 border-2 border-pink-400 rounded-2xl text-xs font-extrabold text-pink-800 hover:bg-pink-100 transition-colors cursor-pointer"
         >
-          <Globe2 className="w-3.5 h-3.5 text-[#3E8B7A]" />
-          <span>{language === 'ta' ? 'English' : 'தமிழ்'}</span>
+          {language === 'ta' ? 'English' : 'தமிழ்'}
         </button>
       </div>
 
-      {/* Main Tab Content */}
+      {/* TAB 1: TODAY (DAILY FARM ASSISTANT) */}
       {activeTab === 'today' && (
-        <div className="space-y-4 flex-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#69615B] tracking-wide uppercase">
-              {language === 'ta' ? 'இன்று செய்ய வேண்டியது' : 'TODAY\'S ACTION'}
+        <div className="space-y-5">
+          {/* Simple Status Summary (Section 3 & 4 Requirement) */}
+          <div className="bg-white border-2 border-stone-300 rounded-3xl p-5 shadow-xs space-y-3">
+            <span className="text-xs font-extrabold text-stone-800 uppercase block border-b-2 border-stone-200 pb-2">
+              {language === 'ta' ? 'இன்று உங்கள் பண்ணை நிலை:' : "TODAY'S FARM STATUS:"}
             </span>
-            <span className="text-[11px] font-sans text-[#C42A6B] bg-[#FAF0F4] px-2 py-0.5 rounded-full font-bold">
-              {activeAdvisory?.status === 'ACKNOWLEDGED' ? 'முடிக்கப்பட்டது' : 'புதிய அறிவிப்பு'}
-            </span>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs font-extrabold">
+              <div className="bg-emerald-50 p-3 rounded-2xl border-2 border-emerald-400 flex items-center justify-between text-emerald-950">
+                <span>🟢 3 குளங்கள் (3 Ponds)</span>
+                <span className="font-heading text-sm">நல்ல நிலை (Good)</span>
+              </div>
+
+              <div className="bg-amber-50 p-3 rounded-2xl border-2 border-amber-400 flex items-center justify-between text-amber-950">
+                <span>🟡 1 குளம் (1 Pond)</span>
+                <span className="font-heading text-sm">கவனிக்கவும் (Watch)</span>
+              </div>
+
+              <div className="bg-rose-50 p-3 rounded-2xl border-2 border-rose-400 flex items-center justify-between text-rose-950">
+                <span>🔴 1 குளம் (1 Pond)</span>
+                <span className="font-heading text-sm">சரிபார்க்கவும் (Check)</span>
+              </div>
+            </div>
           </div>
 
-          {/* Action Advisory Card */}
-          <div className="bg-[#FFFCF7] border-2 border-[#C42A6B] rounded-2xl p-4 shadow-sm space-y-3 relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#14100E]">
-                {language === 'ta' ? 'குளம் TTK-042' : 'POND TTK-042'}
+          {/* Today's Action Decision Card (Section 3 Requirement - 5 Second Decision) */}
+          <div className="bg-white border-3 border-pink-600 rounded-3xl p-5 shadow-md space-y-4 relative overflow-hidden">
+            <div className="flex items-center justify-between border-b-2 border-pink-100 pb-2">
+              <span className="text-xs font-extrabold text-pink-700 uppercase tracking-wider">
+                {language === 'ta' ? 'இன்று என்ன செய்ய வேண்டும்?' : "TODAY'S ACTION NEEDED"}
               </span>
-              <span className="text-xs font-semibold px-2 py-0.5 bg-[#FCF4E2] text-[#8C6212] rounded-full border border-[#D9A441]">
-                {language === 'ta' ? 'நிலை: நல்ல வாய்ப்பு' : 'Status: Candidate'}
-              </span>
+              <SourceBadge source="MODEL" />
             </div>
 
-            {/* Main Instruction */}
-            <div className="space-y-1">
-              <h2 className="text-base font-bold text-[#C42A6B] leading-snug">
+            <div className="space-y-3">
+              <div className="bg-pink-100 border-2 border-pink-400 p-4 rounded-2xl text-base font-tamil font-extrabold text-pink-950 shadow-xs leading-snug">
+                "வெள்ளிக்கிழமை குளத்தை (TTK-042) நேரில் சரிபார்க்கவும்."
+              </div>
+
+              <p className="text-xs font-bold text-stone-900 leading-relaxed">
                 {language === 'ta'
-                  ? activeAdvisory?.tamilInstruction || 'வெள்ளிக்கிழமை குளத்தை நேரில் சரிபார்க்கவும்.'
-                  : activeAdvisory?.englishInstruction || 'Field check required this Friday.'}
-              </h2>
-              <p className="text-xs text-[#69615B] leading-relaxed">
-                {language === 'ta'
-                  ? activeAdvisory?.tamilDetails || 'தற்போதைய நீர்மட்டத்தை அப்படியே பராமரிக்கவும். கள ஆய்வில் உப்புத்தன்மையை அளவிடவும்.'
-                  : activeAdvisory?.englishDetails || 'Maintain current water level (18 cm) and verify salinity threshold.'}
+                  ? 'தற்போதைய தண்ணீரின் நிலை அப்படியே பராமரிக்கவும். ஆர்டீமியா உற்பத்தி செய்ய உகந்த சூழல் உள்ளது.'
+                  : 'Maintain current water level. Biological Artemia production window detected.'}
               </p>
             </div>
 
-            {/* Voice Audio Action Button */}
-            <div className="pt-2 border-t border-[#F7F3EC] flex flex-col space-y-2">
-              <button
-                onClick={speakTamilAdvisory}
-                className={`w-full py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-all ${
-                  isPlayingVoice
-                    ? 'bg-[#C42A6B] text-white animate-pulse'
-                    : 'bg-[#F7F3EC] hover:bg-[#E6DFD5] text-[#14100E] border border-[#E6DFD5]'
-                }`}
-              >
-                <Volume2 className={`w-4 h-4 ${isPlayingVoice ? 'animate-bounce' : 'text-[#C42A6B]'}`} />
-                <span>{isPlayingVoice ? 'பேசுகிறது...' : '🔊 கேட்டு அறிய'}</span>
-              </button>
+            {/* Audio Voice Narration Button */}
+            <button
+              onClick={speakTamilAdvisory}
+              className={`w-full py-3 rounded-2xl text-xs font-extrabold flex items-center justify-center space-x-2 transition-all cursor-pointer ${
+                isPlayingVoice
+                  ? 'bg-pink-600 text-white animate-pulse'
+                  : 'bg-stone-100 hover:bg-stone-200 text-[#11100F] border-2 border-stone-300'
+              }`}
+            >
+              <Volume2 className={`w-4 h-4 ${isPlayingVoice ? 'animate-bounce' : 'text-pink-700'}`} />
+              <span>{isPlayingVoice ? 'பேசுகிறது... (Speaking Tamil)' : '🔊 குரல் அறிவுரை கேட்க (LISTEN ADVISORY)'}</span>
+            </button>
 
-              {voiceError && (
-                <p className="text-[11px] text-[#DE6A45] font-sans bg-[#FDF0EB] p-2 rounded-lg text-center">
-                  {voiceError}
-                </p>
-              )}
-            </div>
-
-            {/* Acknowledgement Action Button */}
+            {/* Action Acknowledgment Button (56px Touch Target - Section 18 Requirement) */}
             <button
               onClick={handleAcknowledge}
               disabled={activeAdvisory?.status === 'ACKNOWLEDGED'}
-              className={`w-full py-3 rounded-xl text-xs font-bold text-white flex items-center justify-center space-x-2 transition-all shadow-xs ${
+              className={`w-full h-14 rounded-2xl text-xs font-extrabold text-white flex items-center justify-center space-x-2 transition-all shadow-md cursor-pointer ${
                 activeAdvisory?.status === 'ACKNOWLEDGED'
-                  ? 'bg-[#3E8B7A] cursor-default'
-                  : guidedDemoStep === 2
-                  ? 'bg-[#C42A6B] hover:bg-[#A8225A] pulse-highlight'
-                  : 'bg-[#C42A6B] hover:bg-[#A8225A]'
+                  ? 'bg-emerald-700 cursor-default'
+                  : guidedDemoStep === 2 || guidedDemoStep === 3
+                  ? 'bg-pink-600 hover:bg-pink-500 demo-highlight'
+                  : 'bg-pink-600 hover:bg-pink-500'
               }`}
             >
-              <CheckCircle2 className="w-4 h-4" />
+              <CheckCircle2 className="w-5 h-5" />
               <span>
                 {activeAdvisory?.status === 'ACKNOWLEDGED'
-                  ? '✓ சரிபார்க்கப்பட்டது (Acknowledged)'
-                  : '✓ சரி (Acknowledge)'}
+                  ? '✓ சரிபார்க்கப்பட்டது (ACKNOWLEDGED)'
+                  : '✓ சரிபார்த்தேன் (CONFIRM ACTION)'}
               </span>
             </button>
           </div>
+
+          {/* Simple Weather Decision Card (Section 9 Requirement) */}
+          <div className="bg-white border-2 border-stone-300 rounded-3xl p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b-2 border-stone-200 pb-2">
+              <span className="text-xs font-extrabold text-stone-800 uppercase flex items-center gap-1.5">
+                <Sun className="w-4 h-4 text-amber-500" />
+                {language === 'ta' ? 'வானிலை தகவல்' : 'WEATHER SUMMARY'}
+              </span>
+              <SourceBadge source="WEATHER" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 text-xs font-extrabold">
+              <div className="bg-amber-50 p-3 rounded-2xl border border-amber-300 flex items-center gap-2">
+                <Sun className="w-5 h-5 text-amber-600" />
+                <span>☀️ இன்று வெயில் (Sunny)</span>
+              </div>
+
+              <div className="bg-blue-50 p-3 rounded-2xl border border-blue-300 flex items-center gap-2">
+                <CloudRain className="w-5 h-5 text-blue-600" />
+                <span>🌧️ நாளை மழை வாய்ப்பு (Rain)</span>
+              </div>
+            </div>
+
+            <div className="bg-stone-100 p-3 rounded-2xl text-xs font-bold text-stone-900 border border-stone-300">
+              💡 <strong>PANNAI ADVICE:</strong> "மழை வர வாய்ப்பு இருப்பதால், இன்று குளத்தின் நீர்மட்டத்தை சரிபார்க்கவும்."
+            </div>
+          </div>
+
+          {/* Artemia Opportunity Decision Card (Section 10 Requirement) */}
+          <div className="bg-pink-50 border-2 border-pink-400 rounded-3xl p-5 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-extrabold text-pink-900 uppercase flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-pink-700" />
+                🦐 புதிய Artemia வாய்ப்பு (NEW OPPORTUNITY)
+              </span>
+              <SourceBadge source="MODEL" />
+            </div>
+
+            <p className="text-xs font-bold text-stone-900 leading-relaxed">
+              "குளம் TTK-042-ல் Artemia வளர்ப்பதற்கு ஏற்ற நிலை உள்ளது. நேரில் சரிபார்த்த பிறகு முடிவு செய்யவும்."
+            </p>
+
+            <button
+              onClick={() => navigate('/earth')}
+              className="w-full h-12 bg-pink-600 hover:bg-pink-500 text-white font-extrabold rounded-2xl text-xs shadow-sm cursor-pointer"
+            >
+              வாய்ப்பை சரிபார்க்க (CHECK OPPORTUNITY) →
+            </button>
+          </div>
+
+          {/* Zero Manual Entry Smart Device Connection Status (Section 7 Requirement) */}
+          <div className="bg-white border-2 border-stone-300 p-4 rounded-3xl shadow-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-extrabold text-stone-800 uppercase flex items-center gap-1.5">
+                <Cpu className="w-4 h-4 text-blue-600" />
+                📡 DEVICE STATUS (சாதன இணைப்பு)
+              </span>
+              <span className="text-xs font-extrabold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
+                CONNECTED ✓
+              </span>
+            </div>
+
+            <p className="text-xs font-bold text-stone-900">
+              "PANNAI தற்போது உங்கள் குளத்தை தானாகவே கண்காணித்து வருகிறது. எந்தத் தகவலையும் கைமுறையாக உள்ளிடத் தேவையில்லை."
+            </p>
+          </div>
+
+          {/* Level 3 Technical Data Toggle (Section 25 & 26 Requirement) */}
+          <div className="bg-stone-50 border border-stone-300 rounded-2xl overflow-hidden">
+            <button
+              onClick={() => setShowLevel3Data(!showLevel3Data)}
+              className="w-full px-4 py-3 font-extrabold text-xs text-stone-800 flex items-center justify-between hover:bg-stone-200 cursor-pointer"
+            >
+              <span>{language === 'ta' ? 'அறிவியல் அளவீடுகள் பார்க்க (WHY? / VIEW DATA)' : 'VIEW TECHNICAL DATA (LEVEL 3)'}</span>
+              {showLevel3Data ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+
+            {showLevel3Data && (
+              <div className="p-4 space-y-2 text-xs border-t border-stone-200 text-stone-900 bg-white">
+                <div className="flex justify-between">
+                  <span>தண்ணீரின் உப்பு அளவு (Salinity):</span>
+                  <span className="font-extrabold">92 ppt</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>வெப்பநிலை (Temperature):</span>
+                  <span className="font-extrabold">32.4°C</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>நீர்மட்டம் (Depth):</span>
+                  <span className="font-extrabold">18 cm</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Income Tab */}
-      {activeTab === 'income' && (
-        <div className="space-y-4 flex-1">
-          <span className="text-xs font-bold text-[#69615B] uppercase tracking-wide">
-            {language === 'ta' ? 'என் வருமானம்' : 'MY INCOME'}
+      {/* TAB 2: PONDS */}
+      {activeTab === 'ponds' && (
+        <div className="space-y-3 font-mono text-xs">
+          <span className="text-xs font-extrabold text-[#11100F] uppercase block border-b-2 border-stone-200 pb-1">
+            {language === 'ta' ? 'என் குளங்கள் (4)' : 'MY PONDS (4)'}
           </span>
 
-          <div className="bg-[#F7F3EC] p-4 rounded-2xl border border-[#E6DFD5] space-y-3">
-            <div className="flex items-center justify-between border-b border-[#E6DFD5] pb-2">
-              <span className="text-xs text-[#69615B]">குளம் TTK-042 (அறுவடை)</span>
-              <span className="text-xs font-mono font-bold text-[#3E8B7A]">DEMO</span>
-            </div>
-
-            <div className="space-y-1.5 text-xs">
-              <div className="flex justify-between">
-                <span className="text-[#69615B]">அறுவடை எடை:</span>
-                <span className="font-bold text-[#14100E]">18.4 kg</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#69615B]">தரச் சோதனை:</span>
-                <span className="font-bold text-[#C42A6B]">GRADE A (86.4% Hatchability)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[#69615B]">விற்பனை நிலை:</span>
-                <span className="font-bold text-[#3E8B7A]">
-                  {farmerIncome.status === 'PAYMENT_RECEIVED' ? 'பணம் உறுதிப்படுத்தப்பட்டது' : 'விற்பனை உறுதிப்படுத்தப்பட்டது'}
+          {ponds.slice(0, 4).map((pond) => (
+            <div key={pond.id} className="bg-white border-2 border-stone-300 rounded-2xl p-4 space-y-2 shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-extrabold text-sm text-[#11100F]">{pond.id}</span>
+                <span className="px-2.5 py-0.5 text-xs font-extrabold bg-emerald-100 text-emerald-900 rounded-full border border-emerald-400">
+                  {pond.status}
                 </span>
               </div>
+              <p className="text-xs font-bold text-stone-900">{pond.recommendedActionTamil}</p>
             </div>
+          ))}
+        </div>
+      )}
 
-            <div className="pt-2 border-t border-[#E6DFD5] flex items-center justify-between">
-              <span className="text-xs font-bold text-[#14100E]">மொத்த தொகை:</span>
-              <span className="text-lg font-bold text-[#C42A6B]">
-                ₹{farmerIncome.totalIncomeINR.toLocaleString('en-IN')}{' '}
-                <span className="text-[10px] text-[#69615B] font-mono">DEMO</span>
-              </span>
+      {/* TAB 3: INCOME */}
+      {activeTab === 'income' && (
+        <div className="bg-white p-5 rounded-3xl border-2 border-stone-300 space-y-3 text-xs font-mono text-[#11100F] shadow-xs">
+          <div className="flex justify-between items-center border-b-2 border-stone-200 pb-2">
+            <span className="font-extrabold text-sm">
+              {language === 'ta' ? 'வருமான அறிக்கை' : 'PAYOUT SUMMARY'}
+            </span>
+            <SourceBadge source="DEMO" />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs">
+              <span className="font-bold text-stone-700">அறுவடை எடை:</span>
+              <span className="font-extrabold">18.4 kg Artemia</span>
+            </div>
+            <div className="flex justify-between text-xs">
+              <span className="font-bold text-stone-700">சரிபார்க்கப்பட்ட தரம்:</span>
+              <span className="font-extrabold text-emerald-800">GRADE A</span>
+            </div>
+            <div className="flex justify-between text-base font-extrabold text-pink-700 pt-2 border-t border-stone-300">
+              <span>{language === 'ta' ? 'மொத்த வருமானம்:' : 'Total Earnings:'}</span>
+              <span>₹{farmerIncome.totalIncomeINR.toLocaleString('en-IN')}</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Bottom Phone Navigation Bar */}
-      <div className="pt-3 border-t border-[#E6DFD5] grid grid-cols-4 gap-1 text-center font-sans">
+      {/* TAB 4: HELP */}
+      {activeTab === 'help' && (
+        <div className="bg-white p-5 rounded-3xl border-2 border-stone-300 space-y-4 text-xs font-mono text-[#11100F]">
+          <div className="border-b-2 border-stone-200 pb-2">
+            <span className="font-extrabold text-base block">
+              {language === 'ta' ? 'உதவி மையம் (HELP & SUPPORT)' : 'HELP & SUPPORT'}
+            </span>
+          </div>
+
+          <a
+            href="tel:+919443210890"
+            className="w-full p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-400 font-extrabold text-emerald-950 flex items-center justify-between block"
+          >
+            <div className="flex items-center gap-3">
+              <PhoneCall className="w-5 h-5 text-emerald-700 shrink-0" />
+              <div>
+                <span className="font-extrabold text-sm block">📞 நேரடி தொலைபேசி உதவி</span>
+                <span className="text-xs text-stone-700 font-bold">Dr. K. Arumugam (+91 94432 10890)</span>
+              </div>
+            </div>
+          </a>
+        </div>
+      )}
+
+      {/* Bottom Phone Drawer Navigation (4 Tabs) */}
+      <div className="pt-2 border-t-2 border-stone-200 grid grid-cols-4 gap-1 text-center font-mono font-extrabold">
         <button
           onClick={() => setActiveTab('today')}
-          className={`flex flex-col items-center space-y-0.5 py-1.5 rounded-lg text-[11px] font-semibold ${
-            activeTab === 'today' ? 'text-[#C42A6B] bg-[#FAF0F4]' : 'text-[#69615B]'
+          className={`flex flex-col items-center space-y-0.5 py-2 rounded-2xl text-xs cursor-pointer ${
+            activeTab === 'today' ? 'text-pink-700 bg-pink-100 border-2 border-pink-300' : 'text-stone-700 hover:bg-stone-100'
           }`}
         >
           <Home className="w-4 h-4" />
-          <span>இன்று</span>
+          <span>{language === 'ta' ? 'இன்று' : 'TODAY'}</span>
         </button>
 
         <button
           onClick={() => setActiveTab('ponds')}
-          className={`flex flex-col items-center space-y-0.5 py-1.5 rounded-lg text-[11px] font-semibold ${
-            activeTab === 'ponds' ? 'text-[#C42A6B] bg-[#FAF0F4]' : 'text-[#69615B]'
+          className={`flex flex-col items-center space-y-0.5 py-2 rounded-2xl text-xs cursor-pointer ${
+            activeTab === 'ponds' ? 'text-pink-700 bg-pink-100 border-2 border-pink-300' : 'text-stone-700 hover:bg-stone-100'
           }`}
         >
           <Layers className="w-4 h-4" />
-          <span>குளங்கள்</span>
+          <span>{language === 'ta' ? 'குளங்கள்' : 'PONDS'}</span>
         </button>
 
         <button
           onClick={() => setActiveTab('income')}
-          className={`flex flex-col items-center space-y-0.5 py-1.5 rounded-lg text-[11px] font-semibold ${
-            activeTab === 'income' ? 'text-[#C42A6B] bg-[#FAF0F4]' : 'text-[#69615B]'
+          className={`flex flex-col items-center space-y-0.5 py-2 rounded-2xl text-xs cursor-pointer ${
+            activeTab === 'income' ? 'text-pink-700 bg-pink-100 border-2 border-pink-300' : 'text-stone-700 hover:bg-stone-100'
           }`}
         >
           <IndianRupee className="w-4 h-4" />
-          <span>வருமானம்</span>
+          <span>{language === 'ta' ? 'வருமானம்' : 'INCOME'}</span>
         </button>
 
         <button
-          onClick={() => setActiveTab('help')}
-          className={`flex flex-col items-center space-y-0.5 py-1.5 rounded-lg text-[11px] font-semibold ${
-            activeTab === 'help' ? 'text-[#C42A6B] bg-[#FAF0F4]' : 'text-[#69615B]'
-          }`}
+          onClick={() => setIsHelpModalOpen(true)}
+          className="flex flex-col items-center space-y-0.5 py-2 rounded-2xl text-xs text-amber-700 hover:bg-amber-50 cursor-pointer"
         >
           <HelpCircle className="w-4 h-4" />
-          <span>உதவி</span>
+          <span>{language === 'ta' ? 'உதவி' : 'HELP'}</span>
         </button>
       </div>
     </div>
