@@ -31,9 +31,27 @@ export interface FieldObservation {
   isDemo: boolean;
 }
 
+export interface SimilarityGroup {
+  id: string; // e.g. Group 01
+  groupNumber: number;
+  pondIds: string[];
+  pondCount: number;
+  similarityScorePercent: number; // e.g. 89%
+  patternLabel: 'Similar Pattern' | 'Needs Verification' | 'Stable Pattern' | 'Changing Pattern';
+  representativePondId: string; // e.g. TTK-007
+  anomalyPondId?: string; // e.g. TTK-023
+  status: PondStatus;
+  lastValidatedDaysAgo: number;
+  description: string;
+}
+
 export interface Pond {
   id: string; // e.g. TTK-042
   name: string;
+  localName?: string; // e.g. Kalam, Veerapandian, Mullakadu
+  groupNumber?: number; // e.g. 1, 2, 3, 4, 5
+  isRepresentative?: boolean;
+  isAnomaly?: boolean;
   owner: string;
   village: string;
   district: string;
@@ -54,6 +72,7 @@ export interface Pond {
   deviceId?: string;
   isDemo: boolean;
 }
+
 
 
 export interface Advisory {
